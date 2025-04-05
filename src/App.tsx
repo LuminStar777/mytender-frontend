@@ -10,6 +10,8 @@ import posthog from "posthog-js";
 import { UpdateChecker } from "./components/UpdateChecker";
 import "react-toastify/dist/ReactToastify.css";
 import { StatusLabelsProvider } from "./views/Bids/components/BidStatusMenu";
+import { Security } from "@okta/okta-react";
+import oktaAuth from "./config/okta";
 
 ReactGA4.initialize("G-X8S1ZMRM3C");
 
@@ -32,9 +34,15 @@ const AppContent = () => {
 };
 
 const App = () => {
+  const restoreOriginalUri = async (_oktaAuth: any, originalUri: string) => {
+    window.location.replace(originalUri);
+  };
+
   return (
     <AuthProvider authType={"localstorage"} authName={"sparkaichatbot"}>
-      <AppContent />
+      <Security oktaAuth={oktaAuth} restoreOriginalUri={restoreOriginalUri}>
+        <AppContent />
+      </Security>
       <ToastContainer
         position="bottom-right"
         autoClose={4000}

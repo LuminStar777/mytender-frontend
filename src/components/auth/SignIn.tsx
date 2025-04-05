@@ -18,8 +18,10 @@ import AuthState from "./AuthState";
 import axios from "axios";
 import { API_URL, HTTP_PREFIX } from "../../helper/Constants";
 import AuthLayout from "@/layout/AuthLayout";
+import { useOktaAuth } from "@okta/okta-react";
 
 const Signin = () => {
+  const { oktaAuth } = useOktaAuth();
   const { submitSignIn, isLoading } = useAuthSignIn();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -42,13 +44,24 @@ const Signin = () => {
     }
 
     try {
-      const { success, message } = await submitSignIn(formData);
-      if (isMounted) {
-        // if (success) toast.success(message);
-        // else toast.error("Incorrect Username or Password");
-        if (!success) toast.error("Incorrect Username or Password");
+      // Authenticate with Okta
+      const oktaResponse = await oktaAuth.signInWithCredentials({
+        username: formData.email,
+        password: formData.password
+      });
+
+      if (oktaResponse.status === "SUCCESS") {
+        // If Okta auth succeeds, also submit to your backend
+        const { success } = await submitSignIn(formData);
+        if (isMounted) {
+          if (!success) {
+            toast.error("Incorrect Username or Password");
+            await oktaAuth.signOut(); // Sign out from Okta if backend auth fails
+          }
+        }
       }
     } catch (error) {
+      console.error("Authentication error:", error);
       if (isMounted) {
         toast.error("Incorrect Username or Password");
       }
