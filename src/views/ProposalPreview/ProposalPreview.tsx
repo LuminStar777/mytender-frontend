@@ -36,7 +36,6 @@ import TextSelectionMenu from "./components/TextSelectionMenu";
 import ProposalToolbar from "./components/ProposalToolbar";
 import MarkReviewReadyButton from "./components/MarkReviewReadyButton";
 import RewriteInputBar from "./components/RewriteInputBar";
-// import { formatSectionText } from "@/utils/formatSectionText";
 
 const ProposalPreview = () => {
   const editorRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -77,7 +76,7 @@ const ProposalPreview = () => {
 
   // Add a ref for the toolbar div
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const [toolbarYPosition, setToolbarYPosition] = useState(0);
+  const [toolbarYPosition, setToolbarYPosition] = useState(58);
 
   useEffect(() => {
     const fetchOrganizationUsers = async () => {
@@ -165,7 +164,8 @@ const ProposalPreview = () => {
   };
 
   const handleRewriteClick = (index: number) => {
-    // Toggle the rewrite section if clicking on the same section
+    posthog.capture("section_rewrite_triggered", { sectionIndex: index });
+
     if (rewritingSectionIndex === index) {
       setRewritingSectionIndex(null);
     } else {
@@ -204,6 +204,10 @@ const ProposalPreview = () => {
       });
 
       setShowSelectionMenu(true);
+
+      posthog.capture("text_selected", {
+        selected_range: range.cloneRange()
+      });
     } else {
       setShowSelectionMenu(false);
       setSelectedRange(null);
@@ -247,16 +251,18 @@ const ProposalPreview = () => {
 
   const handleContentChange = (index: number, newContent: string) => {
     setSharedState((prevState) => {
-      // Create a shallow copy of the outline
+      posthog.capture("section_content_edited", {
+        sectionIndex: index,
+        contentLength: newContent.length
+      });
+
       const newOutline = [...prevState.outline];
 
-      // Update only the specific section
       newOutline[index] = {
-        ...newOutline[index], // Keep all other properties
-        answer: newContent // Update only the answer field
+        ...newOutline[index],
+        answer: newContent
       };
 
-      // Return the new state with only the outline updated
       return {
         ...prevState,
         outline: newOutline
@@ -452,6 +458,7 @@ const ProposalPreview = () => {
           toast.error("Failed to copy section");
         });
         toast.success("Copied to clipboard");
+        posthog.capture("section_copied", { sectionIndex: index });
       }
     }
   };
@@ -581,9 +588,7 @@ const ProposalPreview = () => {
         sidePane && sidePane.contains(event.target as Node);
 
       // Also check if we're clicking inside the right sidebar where the sidepane lives
-      const rightSidebar = document.querySelector(
-        ".max-h-\\[calc\\(100vh-66px\\)\\]"
-      );
+      const rightSidebar = document.querySelector(".proposal-preview-sidepane");
       const isInsideRightSidebar =
         rightSidebar && rightSidebar.contains(event.target as Node);
 
@@ -1106,7 +1111,7 @@ const ProposalPreview = () => {
               {sidepaneOpen && (
                 <div
                   className={cn(
-                    "w-[450px] overflow-y-auto z-50 sticky -top-4 right-0"
+                    "proposal-preview-sidepane w-[450px] overflow-y-auto z-50 sticky -top-4 right-0"
                   )}
                   style={{
                     maxHeight: `calc(100vh - ${241 - (234 - toolbarYPosition)}px)`
@@ -1170,3 +1175,4 @@ const ProposalPreview = () => {
 };
 
 export default withAuth(ProposalPreview);
+
