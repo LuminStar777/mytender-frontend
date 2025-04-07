@@ -49,9 +49,11 @@ const Signin = () => {
           preferred_username: userData.preferred_username
         },
         tokens: {
-          access_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
-          id_token: tokens.idToken
+          access_token: tokens.accessToken.accessToken,
+          access_token_exp: tokens.accessToken.expiresAt,
+          refresh_token: tokens.refreshToken.refreshToken,
+          refresh_token_exp: tokens.refreshToken.expiresAt,
+          id_token: tokens.idToken.idToken
         }
       });
 
@@ -344,8 +346,19 @@ const Signin = () => {
 
           </div>
         </form>
-        {/* <button onClick={()=>oktaAuth.signOut()}>logout</button> */}
-        {/* <div style={{ padding: 20 }}>
+        <br />
+        <Button
+          onClick={() => oktaAuth.signInWithRedirect()}
+          className="w-full h-12 text-lg text-white"
+          size="lg"
+        // disabled={isLoading}
+        >
+          Okta Login
+        </Button>
+
+        {/* <button onClick={() => oktaAuth.signInWithRedirect()}>Login with Okta</button> */}
+        {/* <button onClick={()=>oktaAuth.signOut()}>logout</button>
+        <div style={{ padding: 20 }}>
           {!authState?.isAuthenticated ? (
             <button onClick={() => oktaAuth.signInWithRedirect()}>Login with Okta</button>
           ) : (
@@ -355,8 +368,6 @@ const Signin = () => {
             </>
           )}
         </div> */}
-
-        <button onClick={() => oktaAuth.signInWithRedirect()}>Login with Okta</button>
       </div>
       <AuthState />
     </AuthLayout>
